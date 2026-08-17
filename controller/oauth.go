@@ -325,9 +325,17 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 		}
 	}
 
-	// User doesn't exist, create new user if registration is enabled
+	// User doesn't exist, create new user if registration is enabled. Providers
+	// that opt into RegistrationBypassProvider may still provision accounts when
+	// global registration is disabled (e.g. OIDC auto-provisioning for SSO).
 	if !common.RegisterEnabled {
-		return nil, &OAuthRegistrationDisabledError{}
+		bypassRegistration := false
+		if bypasser, ok := provider.(oauth.RegistrationBypassProvider); ok {
+			bypassRegistration = bypasser.AllowRegistration()
+		}
+		if !bypassRegistration {
+			return nil, &OAuthRegistrationDisabledError{}
+		}
 	}
 
 	// Set up new user
