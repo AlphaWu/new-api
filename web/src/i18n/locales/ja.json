@@ -5318,6 +5318,20 @@
     "Zero retention": "データ保持なし",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Campus Pay": "キャンパスペイ",
+    "Campus Pay Gateway": "キャンパスペイゲートウェイ",
+    "Gateway address": "ゲートウェイアドレス",
+    "Merchant key": "マーチャントキー",
+    "Minimum topup amount": "最低チャージ金額",
+    "Minimum topup amount for campus payment": "キャンパスペイの最低チャージ金額",
+    "Payment platform API domain": "決済プラットフォームのAPIドメイン",
+    "Scene ID (myapp_id)": "シーンID（myapp_id）",
+    "Scene ID assigned by the payment platform": "決済プラットフォームが割り当てたシーンID",
+    "Payment successful": "支払いが成功しました",
+    "Configuration for the campus card payment integration (Qingganlan platform)": "キャンパスカード決済連携の設定（Qingganlanプラットフォーム）",
+    "Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.": "カード決済は同期処理です。webhookはフォールバック用であり、必要な場合は決済プラットフォームのシーン設定で構成してください。",
+    "Will debit {{amount}} CNY from campus card account {{account}}. Confirm payment?": "キャンパスカードアカウント（{{account}}）から {{amount}} 元が引き落とされます。支払いを確認しますか？",
+    "The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.": "支払い金額は 0.01 元以上である必要があります。チャージ金額を増やしてください。"
   }
 }

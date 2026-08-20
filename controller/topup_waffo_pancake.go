@@ -45,8 +45,8 @@ func RequestWaffoPancakeAmount(c *gin.Context) {
 	}
 
 	payMoney := getWaffoPancakePayMoney(req.Amount, group)
-	if payMoney <= 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+	if payMoney < 0.01 {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 
@@ -373,7 +373,7 @@ func RequestWaffoPancakePay(c *gin.Context) {
 
 	payMoney := getWaffoPancakePayMoney(req.Amount, group)
 	if payMoney < 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 

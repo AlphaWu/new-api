@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { SectionPageLayout } from '@/components/layout'
 import { useStatus } from '@/hooks/use-status'
@@ -32,7 +33,11 @@ import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
-import { DEFAULT_DISCOUNT_RATE, PAYMENT_TYPES } from './constants'
+import {
+  DEFAULT_DISCOUNT_RATE,
+  MIN_PAYMENT_MONEY,
+  PAYMENT_TYPES,
+} from './constants'
 import {
   useTopupInfo,
   usePayment,
@@ -183,7 +188,19 @@ export function Wallet(props: WalletProps) {
       }
 
       // Calculate payment amount and show confirmation dialog
-      await calculatePaymentAmount(topupAmount, method.type)
+      const { amount, error } = await calculatePaymentAmount(
+        topupAmount,
+        method.type
+      )
+      if (amount < MIN_PAYMENT_MONEY) {
+        toast.error(
+          error ||
+            t(
+              'The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.'
+            )
+        )
+        return
+      }
       setConfirmDialogOpen(true)
     } finally {
       setPaymentLoading(null)
@@ -199,7 +216,7 @@ export function Wallet(props: WalletProps) {
       topupAmount,
       selectedWaffoMethodIndex,
       {
-        regular: processPayment,
+        regular: (amount, paymentType) => processPayment(amount, paymentType),
         waffo: processWaffoPayment,
         waffoPancake: processWaffoPancakePayment,
       }
@@ -263,7 +280,19 @@ export function Wallet(props: WalletProps) {
     setPaymentLoading(loadingKey)
 
     try {
-      await calculatePaymentAmount(topupAmount, PAYMENT_TYPES.WAFFO)
+      const { amount, error } = await calculatePaymentAmount(
+        topupAmount,
+        PAYMENT_TYPES.WAFFO
+      )
+      if (amount < MIN_PAYMENT_MONEY) {
+        toast.error(
+          error ||
+            t(
+              'The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.'
+            )
+        )
+        return
+      }
       setConfirmDialogOpen(true)
     } finally {
       setPaymentLoading(null)
@@ -363,6 +392,7 @@ export function Wallet(props: WalletProps) {
         processing={processing || waffoProcessing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={effectiveUsdExchangeRate}
+        accountName={user?.username}
       />
 
       <TransferDialog

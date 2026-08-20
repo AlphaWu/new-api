@@ -5318,6 +5318,20 @@
     "Zero retention": "Không lưu dữ liệu",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Campus Pay": "Thanh toán khuôn viên",
+    "Campus Pay Gateway": "Cổng thanh toán khuôn viên",
+    "Gateway address": "Địa chỉ cổng",
+    "Merchant key": "Khóa merchant",
+    "Minimum topup amount": "Số tiền nạp tối thiểu",
+    "Minimum topup amount for campus payment": "Số tiền nạp tối thiểu cho thanh toán khuôn viên",
+    "Payment platform API domain": "Tên miền API của nền tảng thanh toán",
+    "Scene ID (myapp_id)": "ID kịch bản (myapp_id)",
+    "Scene ID assigned by the payment platform": "ID kịch bản do nền tảng thanh toán cấp",
+    "Payment successful": "Thanh toán thành công",
+    "Configuration for the campus card payment integration (Qingganlan platform)": "Cấu hình tích hợp thanh toán thẻ khuôn viên (nền tảng Qingganlan)",
+    "Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.": "Thanh toán thẻ là đồng bộ; webhook chỉ là phương án dự phòng và phải được cấu hình trong cài đặt kịch bản của nền tảng thanh toán.",
+    "Will debit {{amount}} CNY from campus card account {{account}}. Confirm payment?": "Sẽ trừ {{amount}} CNY từ tài khoản thẻ khuôn viên {{account}}. Xác nhận thanh toán?",
+    "The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.": "Số tiền thanh toán không được nhỏ hơn 0,01 CNY. Vui lòng tăng số tiền nạp."
   }
 }

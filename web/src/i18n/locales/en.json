@@ -5318,6 +5318,20 @@
     "Zero retention": "Zero retention",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Campus Pay": "Campus Pay",
+    "Campus Pay Gateway": "Campus Pay Gateway",
+    "Gateway address": "Gateway address",
+    "Merchant key": "Merchant key",
+    "Minimum topup amount": "Minimum topup amount",
+    "Minimum topup amount for campus payment": "Minimum topup amount for campus payment",
+    "Payment platform API domain": "Payment platform API domain",
+    "Scene ID (myapp_id)": "Scene ID (myapp_id)",
+    "Scene ID assigned by the payment platform": "Scene ID assigned by the payment platform",
+    "Payment successful": "Payment successful",
+    "Configuration for the campus card payment integration (Qingganlan platform)": "Configuration for the campus card payment integration (Qingganlan platform)",
+    "Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.": "Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.",
+    "Will debit {{amount}} CNY from campus card account {{account}}. Confirm payment?": "Will debit {{amount}} CNY from campus card account {{account}}. Confirm payment?",
+    "The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.": "The payment amount cannot be less than 0.01 CNY. Please increase the topup amount."
   }
 }

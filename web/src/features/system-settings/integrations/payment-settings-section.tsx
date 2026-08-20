@@ -159,6 +159,15 @@ const paymentSchema = z.object({
       })
     }
   }),
+  ZafuPayAddress: z
+    .string()
+    .refine(
+      isHttpOriginUrl,
+      'Enter only a top-level gateway domain, for example https://payment.zafu.edu.cn, without any path.'
+    ),
+  ZafuPayMyAppId: z.string(),
+  ZafuPayKey: z.string(),
+  ZafuPayMinTopUp: z.coerce.number().min(0),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -437,6 +446,10 @@ export function PaymentSettingsSection({
       CreemWebhookSecret: values.CreemWebhookSecret.trim(),
       CreemTestMode: values.CreemTestMode,
       CreemProducts: values.CreemProducts.trim(),
+      ZafuPayAddress: removeTrailingSlash(values.ZafuPayAddress),
+      ZafuPayMyAppId: values.ZafuPayMyAppId.trim(),
+      ZafuPayKey: values.ZafuPayKey.trim(),
+      ZafuPayMinTopUp: values.ZafuPayMinTopUp,
       WaffoEnabled: values.WaffoEnabled,
       WaffoSandbox: values.WaffoSandbox,
       WaffoMerchantId: values.WaffoMerchantId.trim(),
@@ -482,6 +495,10 @@ export function PaymentSettingsSection({
       CreemWebhookSecret: initialRef.current.CreemWebhookSecret.trim(),
       CreemTestMode: initialRef.current.CreemTestMode,
       CreemProducts: initialRef.current.CreemProducts.trim(),
+      ZafuPayAddress: removeTrailingSlash(initialRef.current.ZafuPayAddress),
+      ZafuPayMyAppId: initialRef.current.ZafuPayMyAppId.trim(),
+      ZafuPayKey: initialRef.current.ZafuPayKey.trim(),
+      ZafuPayMinTopUp: initialRef.current.ZafuPayMinTopUp,
       WaffoEnabled: initialRef.current.WaffoEnabled,
       WaffoSandbox: initialRef.current.WaffoSandbox,
       WaffoMerchantId: initialRef.current.WaffoMerchantId.trim(),
@@ -627,6 +644,22 @@ export function PaymentSettingsSection({
       normalizeJsonForComparison(initial.CreemProducts)
     ) {
       updates.push({ key: 'CreemProducts', value: sanitized.CreemProducts })
+    }
+
+    if (sanitized.ZafuPayAddress !== initial.ZafuPayAddress) {
+      updates.push({ key: 'ZafuPayAddress', value: sanitized.ZafuPayAddress })
+    }
+
+    if (sanitized.ZafuPayMyAppId !== initial.ZafuPayMyAppId) {
+      updates.push({ key: 'ZafuPayMyAppId', value: sanitized.ZafuPayMyAppId })
+    }
+
+    if (sanitized.ZafuPayKey && sanitized.ZafuPayKey !== initial.ZafuPayKey) {
+      updates.push({ key: 'ZafuPayKey', value: sanitized.ZafuPayKey })
+    }
+
+    if (sanitized.ZafuPayMinTopUp !== initial.ZafuPayMinTopUp) {
+      updates.push({ key: 'ZafuPayMinTopUp', value: sanitized.ZafuPayMinTopUp })
     }
 
     if (sanitized.WaffoEnabled !== initial.WaffoEnabled) {
@@ -877,11 +910,12 @@ export function PaymentSettingsSection({
           />
           <Tabs defaultValue='general' className='min-w-0'>
             <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[44rem] grid-cols-6'>
+              <TabsList className='grid min-w-[50rem] grid-cols-7'>
                 <TabsTrigger value='general'>{t('General')}</TabsTrigger>
                 <TabsTrigger value='epay'>Epay</TabsTrigger>
                 <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
                 <TabsTrigger value='creem'>Creem</TabsTrigger>
+                <TabsTrigger value='zafu-pay'>{t('Campus Pay')}</TabsTrigger>
                 <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
                 <TabsTrigger value='waffo'>Waffo</TabsTrigger>
               </TabsList>
@@ -1616,6 +1650,127 @@ export function PaymentSettingsSection({
                 savedBinding={waffoPancakeSavedBinding}
                 onSelectedBindingChange={setWaffoPancakeSelection}
               />
+            </TabsContent>
+
+            <TabsContent value='zafu-pay' className={paymentTabContentClassName}>
+              <div className='space-y-4'>
+                <div>
+                  <h3 className='text-lg font-medium'>
+                    {t('Campus Pay Gateway')}
+                  </h3>
+                  <p className='text-muted-foreground text-sm'>
+                    {t(
+                      'Configuration for the campus card payment integration (Qingganlan platform)'
+                    )}
+                  </p>
+                </div>
+
+                <div className='rounded-md bg-green-50 p-4 text-sm text-green-900 dark:bg-green-950 dark:text-green-100'>
+                  <p className='mb-2 font-medium'>
+                    {t('Webhook Configuration:')}
+                  </p>
+                  <ul className='list-inside list-disc space-y-1'>
+                    <li>
+                      {t('Webhook URL:')}{' '}
+                      <code className='rounded bg-green-100 px-1 py-0.5 text-xs dark:bg-green-900'>
+                        {'<ServerAddress>/api/zafu-pay/notify'}
+                      </code>
+                    </li>
+                    <li>
+                      {t(
+                        'Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.'
+                      )}
+                    </li>
+                  </ul>
+                </div>
+
+                <div className='grid gap-6 md:grid-cols-3'>
+                  <FormField
+                    control={form.control}
+                    name='ZafuPayAddress'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Gateway address')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='https://payment.zafu.edu.cn'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Payment platform API domain')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='ZafuPayMyAppId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Scene ID (myapp_id)')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder='100100' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Scene ID assigned by the payment platform')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='ZafuPayKey'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Merchant key')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder={t('Enter new key to update')}
+                            autoComplete='new-password'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'MD5 signing key (leave blank unless updating)'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='ZafuPayMinTopUp'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Minimum topup amount')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min={0}
+                            {...safeNumberFieldProps(field)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Minimum topup amount for campus payment')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value='waffo' className={paymentTabContentClassName}>

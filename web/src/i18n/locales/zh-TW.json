@@ -5318,6 +5318,20 @@
     "Zero retention": "零數據保留",
     "Zhipu": "智譜",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Campus Pay": "一卡通支付",
+    "Campus Pay Gateway": "一卡通支付閘道",
+    "Gateway address": "閘道位址",
+    "Merchant key": "商戶密鑰",
+    "Minimum topup amount": "最低儲值金額",
+    "Minimum topup amount for campus payment": "一卡通支付最低儲值金額",
+    "Payment platform API domain": "支付平台 API 網域",
+    "Scene ID (myapp_id)": "場景 ID（myapp_id）",
+    "Scene ID assigned by the payment platform": "支付平台分配的場景 ID",
+    "Payment successful": "支付成功",
+    "Configuration for the campus card payment integration (Qingganlan platform)": "校園一卡通支付整合設定（青橄欖支付平台）",
+    "Card payment is synchronous; the webhook is only a fallback and must be configured in the payment platform scenario settings.": "一卡通支付為同步扣款；webhook 僅作備援，如需使用請在支付平台場景設定中配置。",
+    "Will debit {{amount}} CNY from campus card account {{account}}. Confirm payment?": "將從帳戶為 {{account}} 的一卡通帳戶消費 {{amount}} 元，是否確認消費？",
+    "The payment amount cannot be less than 0.01 CNY. Please increase the topup amount.": "支付金額不能低於 0.01 元，請增加儲值數量"
   }
 }

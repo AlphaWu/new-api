@@ -96,12 +96,34 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// 如果启用了一卡通支付，添加到支付方法列表
+	enableZafuPay := isZafuPayTopUpEnabled()
+	if enableZafuPay {
+		hasZafuPay := false
+		for _, method := range payMethods {
+			if method["type"] == model.PaymentMethodZafuPay {
+				hasZafuPay = true
+				break
+			}
+		}
+
+		if !hasZafuPay {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "一卡通支付",
+				"type":      model.PaymentMethodZafuPay,
+				"color":     "#16A34A",
+				"min_topup": strconv.Itoa(setting.ZafuPayMinTopUp),
+			})
+		}
+	}
+
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
 		"enable_creem_topup":               isCreemTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
+		"enable_zafu_pay_topup":            enableZafuPay,
 		"enable_redemption":                complianceConfirmed,
 		"payment_compliance_confirmed":     complianceConfirmed,
 		"payment_compliance_terms_version": operation_setting.CurrentComplianceTermsVersion,
@@ -117,6 +139,7 @@ func GetTopUpInfo(c *gin.Context) {
 		"stripe_min_topup":        setting.StripeMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
+		"zafu_pay_min_topup":      setting.ZafuPayMinTopUp,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
 		"topup_link":              common.TopUpLink,
@@ -286,7 +309,7 @@ func RequestEpay(c *gin.Context) {
 	}
 	payMoney := getPayMoney(req.Amount, group)
 	if payMoney < 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 
@@ -501,8 +524,8 @@ func RequestAmount(c *gin.Context) {
 		return
 	}
 	payMoney := getPayMoney(req.Amount, group)
-	if payMoney <= 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+	if payMoney < 0.01 {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": strconv.FormatFloat(payMoney, 'f', 2, 64)})
