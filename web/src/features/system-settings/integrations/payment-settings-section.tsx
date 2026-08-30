@@ -167,7 +167,8 @@ const paymentSchema = z.object({
     ),
   ZafuPayMyAppId: z.string(),
   ZafuPayKey: z.string(),
-  ZafuPayMinTopUp: z.coerce.number().min(0),
+  ZafuPayMinTopUp: z.coerce.number().int().min(0),
+  ZafuPayDailyLimit: z.coerce.number().int().min(0),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -450,6 +451,7 @@ export function PaymentSettingsSection({
       ZafuPayMyAppId: values.ZafuPayMyAppId.trim(),
       ZafuPayKey: values.ZafuPayKey.trim(),
       ZafuPayMinTopUp: values.ZafuPayMinTopUp,
+      ZafuPayDailyLimit: values.ZafuPayDailyLimit,
       WaffoEnabled: values.WaffoEnabled,
       WaffoSandbox: values.WaffoSandbox,
       WaffoMerchantId: values.WaffoMerchantId.trim(),
@@ -499,6 +501,7 @@ export function PaymentSettingsSection({
       ZafuPayMyAppId: initialRef.current.ZafuPayMyAppId.trim(),
       ZafuPayKey: initialRef.current.ZafuPayKey.trim(),
       ZafuPayMinTopUp: initialRef.current.ZafuPayMinTopUp,
+      ZafuPayDailyLimit: initialRef.current.ZafuPayDailyLimit,
       WaffoEnabled: initialRef.current.WaffoEnabled,
       WaffoSandbox: initialRef.current.WaffoSandbox,
       WaffoMerchantId: initialRef.current.WaffoMerchantId.trim(),
@@ -660,6 +663,10 @@ export function PaymentSettingsSection({
 
     if (sanitized.ZafuPayMinTopUp !== initial.ZafuPayMinTopUp) {
       updates.push({ key: 'ZafuPayMinTopUp', value: sanitized.ZafuPayMinTopUp })
+    }
+
+    if (sanitized.ZafuPayDailyLimit !== initial.ZafuPayDailyLimit) {
+      updates.push({ key: 'ZafuPayDailyLimit', value: sanitized.ZafuPayDailyLimit })
     }
 
     if (sanitized.WaffoEnabled !== initial.WaffoEnabled) {
@@ -1764,6 +1771,31 @@ export function PaymentSettingsSection({
                         </FormControl>
                         <FormDescription>
                           {t('Minimum topup amount for campus payment')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='ZafuPayDailyLimit'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t('Daily topup limit')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min={0}
+                            {...safeNumberFieldProps(field)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'Daily (calendar day) topup limit for campus payment, in the same unit as the topup amount. 0 means no limit.'
+                          )}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

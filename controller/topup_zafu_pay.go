@@ -51,6 +51,9 @@ func RequestZafuPayAmount(c *gin.Context) {
 	if rejectInvalidTopUpQuota(c, id, req.Amount) {
 		return
 	}
+	if checkZafuPayDailyLimit(c, id, req.Amount) {
+		return
+	}
 	group, err := model.GetUserGroup(id, true)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "获取用户分组失败"})
@@ -69,6 +72,57 @@ func getZafuPayConfig() zafu_pay.Config {
 		Address:     setting.ZafuPayAddress,
 		MerchantKey: setting.ZafuPayKey,
 	}
+}
+
+// zafuPayAmountToBase 把用户输入的充值数量换算为落库/限额比对用的币种单位：
+// tokens 展示类型下前端传的是 tokens，需除以 QuotaPerUnit 折算为币种数量；
+// 其余类型（USD/CNY/CUSTOM）前端传的就是币种数量，原样返回。
+func zafuPayAmountToBase(amount int64) int64 {
+	if operation_setting.GetQuotaDisplayType() != operation_setting.QuotaDisplayTypeTokens {
+		return amount
+	}
+	dAmount := decimal.NewFromInt(amount)
+	dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+	return dAmount.Div(dQuotaPerUnit).IntPart()
+}
+
+// zafuPayBaseToDisplay 把币种单位数量换算为当前展示单位数量（zafuPayAmountToBase 的逆运算）。
+func zafuPayBaseToDisplay(baseAmount int64) int64 {
+	if operation_setting.GetQuotaDisplayType() != operation_setting.QuotaDisplayTypeTokens {
+		return baseAmount
+	}
+	dBase := decimal.NewFromInt(baseAmount)
+	dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
+	return dBase.Mul(dQuotaPerUnit).IntPart()
+}
+
+// zafuPayDayStartTs 返回服务器本地时区当天 0 点的秒级 Unix 时间戳，
+// 作为一卡通单日充值限额的自然日窗口起点。
+func zafuPayDayStartTs() int64 {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).Unix()
+}
+
+// checkZafuPayDailyLimit 在用户发起一卡通充值前检查单日（自然日）充值限额。
+// 限额未配置（<=0）时放行；否则「当日已成功充值 + 本次」超过上限即拒绝。
+// 配置值以展示单位存储（与 ZafuPayMinTopUp 同单位），比对前经 zafuPayAmountToBase
+// 折算为币种单位，与落库的 amount（币种单位）及本次充值保持同一单位。
+func checkZafuPayDailyLimit(c *gin.Context, userId int, amount int64) bool {
+	if setting.ZafuPayDailyLimit <= 0 {
+		return false
+	}
+	limitBase := zafuPayAmountToBase(int64(setting.ZafuPayDailyLimit))
+	usedBase, err := model.SumZafuPayTopUpAmountSince(userId, zafuPayDayStartTs())
+	if err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("一卡通支付 查询当日充值累计失败 user_id=%d error=%q", userId, err.Error()))
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值限额校验失败，请稍后重试"})
+		return true
+	}
+	if usedBase+zafuPayAmountToBase(amount) > limitBase {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": fmt.Sprintf("今日一卡通充值已达上限 %d，请明日再试", int64(setting.ZafuPayDailyLimit))})
+		return true
+	}
+	return false
 }
 
 // RequestZafuPay 创建校园一卡通支付订单并同步扣款。
@@ -97,6 +151,9 @@ func RequestZafuPay(c *gin.Context) {
 
 	id := c.GetInt("id")
 	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+		return
+	}
+	if checkZafuPayDailyLimit(c, id, req.Amount) {
 		return
 	}
 
@@ -129,12 +186,7 @@ func RequestZafuPay(c *gin.Context) {
 	tradeNo := fmt.Sprintf("%s%d", common.GetRandomString(6), time.Now().Unix())
 	tradeNo = fmt.Sprintf("USR%dNO%s", id, tradeNo)
 
-	amount := req.Amount
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		dAmount := decimal.NewFromInt(amount)
-		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-		amount = dAmount.Div(dQuotaPerUnit).IntPart()
-	}
+	amount := zafuPayAmountToBase(req.Amount)
 	topUp := &model.TopUp{
 		UserId:          id,
 		Amount:          amount,

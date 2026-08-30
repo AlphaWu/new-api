@@ -336,6 +336,7 @@ export type BillingSettings = {
   ZafuPayMyAppId: string
   ZafuPayKey: string
   ZafuPayMinTopUp: number
+  ZafuPayDailyLimit: number
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number

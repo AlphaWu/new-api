@@ -145,6 +145,26 @@ func GetTopUpByTradeNo(tradeNo string) *TopUp {
 	return topUp
 }
 
+// SumZafuPayTopUpAmountSince 累加某用户自 sinceTs（秒级 Unix 时间戳）起
+// 一卡通（zafu_pay）成功充值订单的 amount 之和（币种单位）。
+// 仅统计 status=success：一卡通为同步扣款，只有真正入账的订单才占用当日额度，
+// 失败或待对账订单不计入。amount 列恒为币种单位（tokens 展示时落库前已折算）。
+func SumZafuPayTopUpAmountSince(userId int, sinceTs int64) (int64, error) {
+	var total *int64
+	err := DB.Model(&TopUp{}).
+		Where("user_id = ? AND payment_provider = ? AND status = ? AND create_time >= ?",
+			userId, PaymentProviderZafuPay, common.TopUpStatusSuccess, sinceTs).
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	if total == nil {
+		return 0, nil
+	}
+	return *total, nil
+}
+
 func UpdatePendingTopUpStatus(tradeNo string, expectedPaymentProvider string, targetStatus string) error {
 	if tradeNo == "" {
 		return errors.New("未提供支付单号")

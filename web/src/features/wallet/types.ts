@@ -155,6 +155,10 @@ export interface TopupInfo {
   enable_zafu_pay_topup?: boolean
   /** Minimum topup amount for Zafu Pay */
   zafu_pay_min_topup?: number
+  /** Daily (calendar day) topup limit for Zafu Pay, in display units. 0 = no limit */
+  zafu_pay_daily_limit?: number
+  /** Today's remaining Zafu Pay topup quota, in display units */
+  zafu_pay_daily_remaining?: number
   /** Whether redemption code usage is enabled */
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */

@@ -157,6 +157,7 @@ const BILLING_SECTIONS = [
           ZafuPayMyAppId: settings.ZafuPayMyAppId,
           ZafuPayKey: settings.ZafuPayKey,
           ZafuPayMinTopUp: settings.ZafuPayMinTopUp,
+          ZafuPayDailyLimit: settings.ZafuPayDailyLimit,
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,

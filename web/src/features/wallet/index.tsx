@@ -87,7 +87,8 @@ export function Wallet(props: WalletProps) {
 
   const { status } = useStatus()
   const { currency } = useSystemConfig()
-  const { topupInfo, presetAmounts, loading: topupLoading } = useTopupInfo()
+  const { topupInfo, presetAmounts, loading: topupLoading, refetch: refetchTopupInfo } =
+    useTopupInfo()
 
   // Calculate effective exchange rate - when display type is USD, use rate of 1
   const effectiveUsdExchangeRate = useMemo(() => {
@@ -225,6 +226,8 @@ export function Wallet(props: WalletProps) {
     if (success) {
       setConfirmDialogOpen(false)
       await fetchUser()
+      // Refresh topup info so today's remaining daily quota reflects the new order
+      refetchTopupInfo()
     }
   }
 
@@ -343,6 +346,8 @@ export function Wallet(props: WalletProps) {
                   onRedeem={handleRedeem}
                   redeeming={redeeming}
                   topupLink={topupInfo?.topup_link}
+                  zafuPayDailyLimit={topupInfo?.zafu_pay_daily_limit}
+                  zafuPayDailyRemaining={topupInfo?.zafu_pay_daily_remaining}
                   loading={topupLoading}
                   priceRatio={(status?.price as number) || 1}
                   usdExchangeRate={effectiveUsdExchangeRate}

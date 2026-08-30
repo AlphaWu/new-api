@@ -69,6 +69,10 @@ interface RechargeFormCardProps {
   onRedeem: () => void
   redeeming: boolean
   topupLink?: string
+  /** Daily (calendar day) campus payment topup limit in display units, 0 = no limit */
+  zafuPayDailyLimit?: number
+  /** Today's remaining campus payment topup quota in display units */
+  zafuPayDailyRemaining?: number
   loading?: boolean
   priceRatio?: number
   usdExchangeRate?: number
@@ -99,6 +103,8 @@ export function RechargeFormCard({
   onRedeem,
   redeeming,
   topupLink,
+  zafuPayDailyLimit,
+  zafuPayDailyRemaining,
   loading,
   priceRatio = 1,
   usdExchangeRate = 1,
@@ -395,6 +401,29 @@ export function RechargeFormCard({
                   </Alert>
                 )}
               </div>
+
+              {topupInfo?.enable_zafu_pay_topup &&
+                (zafuPayDailyLimit ?? 0) > 0 && (
+                  <Alert
+                    variant={
+                      (zafuPayDailyRemaining ?? 0) <= 0
+                        ? 'destructive'
+                        : 'default'
+                    }
+                  >
+                    <AlertDescription>
+                      {(zafuPayDailyRemaining ?? 0) > 0 ? (
+                        t('Today\'s remaining campus payment quota: {{amount}}', {
+                          amount: zafuPayDailyRemaining ?? 0,
+                        })
+                      ) : (
+                        t(
+                          'Today\'s campus payment quota has been used up, please try again tomorrow.'
+                        )
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
               {enableWaffoTopup &&
                 hasWaffoPaymentMethods &&

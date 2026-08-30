@@ -117,6 +117,24 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// 一卡通单日充值限额：限额未配置时均返回 0，前端据此隐藏展示。
+	// 配置值以展示单位存储（与 ZafuPayMinTopUp 同单位），剩余额度先折算为币种单位
+	// 与当日已成功充值累计相减，再折算回展示单位下发。
+	zafuPayDailyLimitDisplay := int64(0)
+	zafuPayDailyRemaining := int64(0)
+	if enableZafuPay && setting.ZafuPayDailyLimit > 0 {
+		zafuPayDailyLimitDisplay = int64(setting.ZafuPayDailyLimit)
+		userId := c.GetInt("id")
+		usedBase, sumErr := model.SumZafuPayTopUpAmountSince(userId, zafuPayDayStartTs())
+		if sumErr == nil {
+			remainingBase := zafuPayAmountToBase(int64(setting.ZafuPayDailyLimit)) - usedBase
+			if remainingBase < 0 {
+				remainingBase = 0
+			}
+			zafuPayDailyRemaining = zafuPayBaseToDisplay(remainingBase)
+		}
+	}
+
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
@@ -133,16 +151,18 @@ func GetTopUpInfo(c *gin.Context) {
 			}
 			return nil
 		}(),
-		"creem_products":          setting.CreemProducts,
-		"pay_methods":             payMethods,
-		"min_topup":               operation_setting.MinTopUp,
-		"stripe_min_topup":        setting.StripeMinTopUp,
-		"waffo_min_topup":         setting.WaffoMinTopUp,
-		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
-		"zafu_pay_min_topup":      setting.ZafuPayMinTopUp,
-		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
-		"topup_link":              common.TopUpLink,
+		"creem_products":           setting.CreemProducts,
+		"pay_methods":              payMethods,
+		"min_topup":                operation_setting.MinTopUp,
+		"stripe_min_topup":         setting.StripeMinTopUp,
+		"waffo_min_topup":          setting.WaffoMinTopUp,
+		"waffo_pancake_min_topup":  setting.WaffoPancakeMinTopUp,
+		"zafu_pay_min_topup":       setting.ZafuPayMinTopUp,
+		"zafu_pay_daily_limit":     zafuPayDailyLimitDisplay,
+		"zafu_pay_daily_remaining": zafuPayDailyRemaining,
+		"amount_options":           operation_setting.GetPaymentSetting().AmountOptions,
+		"discount":                 operation_setting.GetPaymentSetting().AmountDiscount,
+		"topup_link":               common.TopUpLink,
 	}
 	common.ApiSuccess(c, data)
 }
