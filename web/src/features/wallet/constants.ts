@@ -36,6 +36,7 @@ export const PAYMENT_TYPES = {
   CREEM: 'creem',
   WAFFO: 'waffo',
   WAFFO_PANCAKE: 'waffo_pancake',
+  ZAFU_PAY: 'zafu_pay',
 } as const
 
 /**
@@ -53,6 +54,7 @@ export const PAYMENT_ICON_COLORS = {
   [PAYMENT_TYPES.CREEM]: '#6366F1',
   [PAYMENT_TYPES.WAFFO]: '#2563EB',
   [PAYMENT_TYPES.WAFFO_PANCAKE]: '#F97316',
+  [PAYMENT_TYPES.ZAFU_PAY]: '#16A34A',
 } as const
 
 /**
@@ -64,3 +66,9 @@ export const DEFAULT_DISCOUNT_RATE = 1.0
  * Default minimum topup amount
  */
 export const DEFAULT_MIN_TOPUP = 1
+
+/**
+ * Minimum payable money (CNY yuan). The payment platforms settle in fen,
+ * so a payable amount below 0.01 yuan cannot be charged and must be rejected.
+ */
+export const MIN_PAYMENT_MONEY = 0.01

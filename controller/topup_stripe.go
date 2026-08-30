@@ -62,8 +62,8 @@ func (*StripeAdaptor) RequestAmount(c *gin.Context, req *StripePayRequest) {
 		return
 	}
 	payMoney := getStripePayMoney(float64(req.Amount), group)
-	if payMoney <= 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+	if payMoney < 0.01 {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": strconv.FormatFloat(payMoney, 'f', 2, 64)})

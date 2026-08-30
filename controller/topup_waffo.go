@@ -135,8 +135,8 @@ func RequestWaffoAmount(c *gin.Context) {
 	}
 
 	payMoney := getWaffoPayMoney(float64(req.Amount), group)
-	if payMoney <= 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+	if payMoney < 0.01 {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 
@@ -206,7 +206,7 @@ func RequestWaffoPay(c *gin.Context) {
 	group, _ := model.GetUserGroup(id, true)
 	payMoney := getWaffoPayMoney(float64(req.Amount), group)
 	if payMoney < 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 

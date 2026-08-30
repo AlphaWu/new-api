@@ -153,6 +153,11 @@ const BILLING_SECTIONS = [
           CreemWebhookSecret: settings.CreemWebhookSecret,
           CreemTestMode: settings.CreemTestMode,
           CreemProducts: settings.CreemProducts,
+          ZafuPayAddress: settings.ZafuPayAddress,
+          ZafuPayMyAppId: settings.ZafuPayMyAppId,
+          ZafuPayKey: settings.ZafuPayKey,
+          ZafuPayMinTopUp: settings.ZafuPayMinTopUp,
+          ZafuPayDailyLimit: settings.ZafuPayDailyLimit,
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,

@@ -96,12 +96,52 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// 如果启用了一卡通支付，添加到支付方法列表
+	enableZafuPay := isZafuPayTopUpEnabled()
+	if enableZafuPay {
+		hasZafuPay := false
+		for _, method := range payMethods {
+			if method["type"] == model.PaymentMethodZafuPay {
+				hasZafuPay = true
+				break
+			}
+		}
+
+		if !hasZafuPay {
+			payMethods = append(payMethods, map[string]string{
+				"name":      "一卡通支付",
+				"type":      model.PaymentMethodZafuPay,
+				"color":     "#16A34A",
+				"min_topup": strconv.Itoa(setting.ZafuPayMinTopUp),
+			})
+		}
+	}
+
+	// 一卡通单日充值限额：限额未配置时均返回 0，前端据此隐藏展示。
+	// 配置值以展示单位存储（与 ZafuPayMinTopUp 同单位），剩余额度先折算为币种单位
+	// 与当日已成功充值累计相减，再折算回展示单位下发。
+	zafuPayDailyLimitDisplay := int64(0)
+	zafuPayDailyRemaining := int64(0)
+	if enableZafuPay && setting.ZafuPayDailyLimit > 0 {
+		zafuPayDailyLimitDisplay = int64(setting.ZafuPayDailyLimit)
+		userId := c.GetInt("id")
+		usedBase, sumErr := model.SumZafuPayTopUpAmountSince(userId, zafuPayDayStartTs())
+		if sumErr == nil {
+			remainingBase := zafuPayAmountToBase(int64(setting.ZafuPayDailyLimit)) - usedBase
+			if remainingBase < 0 {
+				remainingBase = 0
+			}
+			zafuPayDailyRemaining = zafuPayBaseToDisplay(remainingBase)
+		}
+	}
+
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
 		"enable_creem_topup":               isCreemTopUpEnabled(),
 		"enable_waffo_topup":               enableWaffo,
 		"enable_waffo_pancake_topup":       enableWaffoPancake,
+		"enable_zafu_pay_topup":            enableZafuPay,
 		"enable_redemption":                complianceConfirmed,
 		"payment_compliance_confirmed":     complianceConfirmed,
 		"payment_compliance_terms_version": operation_setting.CurrentComplianceTermsVersion,
@@ -111,15 +151,18 @@ func GetTopUpInfo(c *gin.Context) {
 			}
 			return nil
 		}(),
-		"creem_products":          setting.CreemProducts,
-		"pay_methods":             payMethods,
-		"min_topup":               operation_setting.MinTopUp,
-		"stripe_min_topup":        setting.StripeMinTopUp,
-		"waffo_min_topup":         setting.WaffoMinTopUp,
-		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
-		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
-		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
-		"topup_link":              common.TopUpLink,
+		"creem_products":           setting.CreemProducts,
+		"pay_methods":              payMethods,
+		"min_topup":                operation_setting.MinTopUp,
+		"stripe_min_topup":         setting.StripeMinTopUp,
+		"waffo_min_topup":          setting.WaffoMinTopUp,
+		"waffo_pancake_min_topup":  setting.WaffoPancakeMinTopUp,
+		"zafu_pay_min_topup":       setting.ZafuPayMinTopUp,
+		"zafu_pay_daily_limit":     zafuPayDailyLimitDisplay,
+		"zafu_pay_daily_remaining": zafuPayDailyRemaining,
+		"amount_options":           operation_setting.GetPaymentSetting().AmountOptions,
+		"discount":                 operation_setting.GetPaymentSetting().AmountDiscount,
+		"topup_link":               common.TopUpLink,
 	}
 	common.ApiSuccess(c, data)
 }
@@ -290,7 +333,7 @@ func RequestEpay(c *gin.Context) {
 	}
 	payMoney := getPayMoney(req.Amount, group)
 	if payMoney < 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 
@@ -505,8 +548,8 @@ func RequestAmount(c *gin.Context) {
 		return
 	}
 	payMoney := getPayMoney(req.Amount, group)
-	if payMoney <= 0.01 {
-		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低"})
+	if payMoney < 0.01 {
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "充值金额过低，最低支付金额为 0.01 元"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": strconv.FormatFloat(payMoney, 'f', 2, 64)})

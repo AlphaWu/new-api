@@ -126,6 +126,11 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
+	common.OptionMap["ZafuPayAddress"] = setting.ZafuPayAddress
+	common.OptionMap["ZafuPayMyAppId"] = setting.ZafuPayMyAppId
+	common.OptionMap["ZafuPayKey"] = setting.ZafuPayKey
+	common.OptionMap["ZafuPayMinTopUp"] = strconv.Itoa(setting.ZafuPayMinTopUp)
+	common.OptionMap["ZafuPayDailyLimit"] = strconv.Itoa(setting.ZafuPayDailyLimit)
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -467,6 +472,16 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.StripeMinTopUp, _ = strconv.Atoi(value)
 	case "StripePromotionCodesEnabled":
 		setting.StripePromotionCodesEnabled = value == "true"
+	case "ZafuPayAddress":
+		setting.ZafuPayAddress = value
+	case "ZafuPayMyAppId":
+		setting.ZafuPayMyAppId = value
+	case "ZafuPayKey":
+		setting.ZafuPayKey = value
+	case "ZafuPayMinTopUp":
+		setting.ZafuPayMinTopUp, _ = strconv.Atoi(value)
+	case "ZafuPayDailyLimit":
+		setting.ZafuPayDailyLimit, _ = strconv.Atoi(value)
 	case "CreemApiKey":
 		setting.CreemApiKey = value
 	case "CreemProducts":

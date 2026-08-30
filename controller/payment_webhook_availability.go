@@ -108,3 +108,19 @@ func isEpayWebhookConfigured() bool {
 func isEpayWebhookEnabled() bool {
 	return isEpayTopUpEnabled()
 }
+
+func isZafuPayTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() {
+		return false
+	}
+	return isZafuPayWebhookConfigured()
+}
+
+func isZafuPayWebhookConfigured() bool {
+	return strings.TrimSpace(setting.ZafuPayMyAppId) != "" &&
+		strings.TrimSpace(setting.ZafuPayKey) != ""
+}
+
+func isZafuPayWebhookEnabled() bool {
+	return isZafuPayTopUpEnabled()
+}
