@@ -40,3 +40,13 @@ type Provider interface {
 	// (e.g. the user_oauth_bindings table) return an empty string.
 	ProviderUserIDColumn() string
 }
+
+// RegistrationBypassProvider is an optional interface implemented by providers
+// that may provision a new account even when global registration is disabled
+// (common.RegisterEnabled == false). Providers that do not implement it fall
+// back to the global registration gate.
+type RegistrationBypassProvider interface {
+	// AllowRegistration reports whether this provider may create new users
+	// independently of the global registration setting.
+	AllowRegistration() bool
+}

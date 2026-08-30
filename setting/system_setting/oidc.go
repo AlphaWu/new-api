@@ -15,6 +15,8 @@ type OIDCSettings struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`
 	UserInfoEndpoint      string `json:"user_info_endpoint"`
+	// AllowRegistration 允许 OIDC 在全局注册关闭（RegisterEnabled=false）时仍为新用户自动建档。
+	AllowRegistration bool `json:"allow_registration"`
 }
 
 // 默认配置
