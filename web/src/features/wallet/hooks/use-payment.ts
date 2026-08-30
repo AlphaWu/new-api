@@ -25,17 +25,26 @@ import {
   calculateStripeAmount,
   calculateWaffoAmount,
   calculateWaffoPancakeAmount,
+  calculateZafuPayAmount,
   requestPayment,
   requestStripePayment,
+  requestZafuPayPayment,
   isApiSuccess,
 } from '../api'
 import {
   isStripePayment,
   isWaffoPayment,
   isWaffoPancakePayment,
+  isZafuPayPayment,
   submitPaymentForm,
 } from '../lib'
-import type { AmountRequest, AmountResponse } from '../types'
+import type {
+  AmountRequest,
+  AmountResponse,
+  PaymentResponse,
+  StripePaymentResponse,
+  ZafuPayPaymentResponse,
+} from '../types'
 
 // ============================================================================
 // Payment Hook
@@ -48,6 +57,7 @@ export interface PaymentAmountCalculators {
   stripe: AmountCalculator
   waffo: AmountCalculator
   waffoPancake: AmountCalculator
+  zafuPay: AmountCalculator
 }
 
 const defaultPaymentAmountCalculators: PaymentAmountCalculators = {
@@ -55,6 +65,7 @@ const defaultPaymentAmountCalculators: PaymentAmountCalculators = {
   stripe: calculateStripeAmount,
   waffo: calculateWaffoAmount,
   waffoPancake: calculateWaffoPancakeAmount,
+  zafuPay: calculateZafuPayAmount,
 }
 
 export async function requestPaymentAmount(
@@ -69,14 +80,31 @@ export async function requestPaymentAmount(
     calculator = calculators.waffo
   } else if (isWaffoPancakePayment(paymentType)) {
     calculator = calculators.waffoPancake
+  } else if (isZafuPayPayment(paymentType)) {
+    calculator = calculators.zafuPay
   }
 
   const response = await calculator({ amount: topupAmount })
   if (!isApiSuccess(response) || !response.data) {
-    return 0
+    // Backend puts the human-readable reason in `data` (e.g. 充值金额过低)
+    const reason =
+      typeof response.data === 'string' && response.data
+        ? response.data
+        : response.message
+    throw new Error(reason || 'Failed to calculate payment amount')
   }
 
-  return Number.parseFloat(response.data)
+  const parsed = Number.parseFloat(response.data)
+  if (!Number.isFinite(parsed)) {
+    throw new Error('Invalid payment amount')
+  }
+  return parsed
+}
+
+export interface PaymentAmountResult {
+  amount: number
+  /** Human-readable reason when the amount could not be calculated */
+  error: string | null
 }
 
 export function usePayment() {
@@ -86,7 +114,10 @@ export function usePayment() {
 
   // Calculate payment amount
   const calculatePaymentAmount = useCallback(
-    async (topupAmount: number, paymentType: string) => {
+    async (
+      topupAmount: number,
+      paymentType: string
+    ): Promise<PaymentAmountResult> => {
       try {
         setCalculating(true)
         const calculatedAmount = await requestPaymentAmount(
@@ -94,10 +125,16 @@ export function usePayment() {
           paymentType
         )
         setAmount(calculatedAmount)
-        return calculatedAmount
-      } catch {
+        return { amount: calculatedAmount, error: null }
+      } catch (error) {
         setAmount(0)
-        return 0
+        return {
+          amount: 0,
+          error:
+            error instanceof Error
+              ? error.message
+              : i18next.t('Payment request failed'),
+        }
       } finally {
         setCalculating(false)
       }
@@ -112,17 +149,26 @@ export function usePayment() {
         setProcessing(true)
 
         const isStripe = isStripePayment(paymentType)
+        const isZafuPay = isZafuPayPayment(paymentType)
         const amount = Math.floor(topupAmount)
 
-        const response = isStripe
-          ? await requestStripePayment({
-              amount,
-              payment_method: 'stripe',
-            })
-          : await requestPayment({
-              amount,
-              payment_method: paymentType,
-            })
+        let response: PaymentResponse | StripePaymentResponse | ZafuPayPaymentResponse
+        if (isStripe) {
+          response = await requestStripePayment({
+            amount,
+            payment_method: 'stripe',
+          })
+        } else if (isZafuPay) {
+          response = await requestZafuPayPayment({
+            amount,
+            payment_method: 'zafu_pay',
+          })
+        } else {
+          response = await requestPayment({
+            amount,
+            payment_method: paymentType,
+          })
+        }
 
         if (!isApiSuccess(response)) {
           toast.error(response.message || i18next.t('Payment request failed'))
@@ -130,9 +176,21 @@ export function usePayment() {
         }
 
         // Handle Stripe payment
-        if (isStripe && response.data?.pay_link) {
-          window.open(response.data.pay_link as string, '_blank')
-          toast.success(i18next.t('Redirecting to payment page...'))
+        if (isStripe) {
+          const payLink = (
+            response.data as { pay_link?: string } | undefined
+          )?.pay_link
+          if (payLink) {
+            window.open(payLink, '_blank')
+            toast.success(i18next.t('Redirecting to payment page...'))
+            return true
+          }
+        }
+
+        // Handle Zafu Pay: the campus card is charged synchronously by the
+        // backend, so a successful response means the balance is credited
+        if (isZafuPay) {
+          toast.success(i18next.t('Payment successful'))
           return true
         }
 

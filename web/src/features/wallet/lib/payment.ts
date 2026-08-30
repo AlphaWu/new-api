@@ -93,6 +93,16 @@ export function isWaffoPancakePayment(paymentType: string): boolean {
   return paymentType === PAYMENT_TYPES.WAFFO_PANCAKE
 }
 
+/**
+ * Check if payment method is Zafu Pay (campus payment)
+ *
+ * Zafu Pay charges the campus card synchronously through the backend
+ * unifiedOrder API, so a successful response means the balance is credited.
+ */
+export function isZafuPayPayment(paymentType: string): boolean {
+  return paymentType === PAYMENT_TYPES.ZAFU_PAY
+}
+
 export interface PaymentProcessors {
   regular: (topupAmount: number, paymentType: string) => Promise<boolean>
   waffo: (topupAmount: number, payMethodIndex: number) => Promise<boolean>
@@ -144,6 +154,10 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
     return PAYMENT_TYPES.WAFFO_PANCAKE
   }
 
+  if (topupInfo.enable_zafu_pay_topup) {
+    return PAYMENT_TYPES.ZAFU_PAY
+  }
+
   return DEFAULT_PAYMENT_TYPE
 }
 
@@ -169,6 +183,10 @@ export function getMinTopupAmount(topupInfo: TopupInfo | null): number {
 
   if (topupInfo.enable_waffo_pancake_topup) {
     return topupInfo.waffo_pancake_min_topup || DEFAULT_MIN_TOPUP
+  }
+
+  if (topupInfo.enable_zafu_pay_topup) {
+    return topupInfo.zafu_pay_min_topup || DEFAULT_MIN_TOPUP
   }
 
   return DEFAULT_MIN_TOPUP

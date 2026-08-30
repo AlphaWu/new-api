@@ -59,6 +59,7 @@ export type WaffoPancakePaymentResponse = ApiResponse<
     }
   | string
 >
+export type ZafuPayPaymentResponse = ApiResponse<{ transaction_id?: string }>
 
 /**
  * Creem product configuration
@@ -150,6 +151,14 @@ export interface TopupInfo {
   enable_waffo_pancake_topup?: boolean
   /** Minimum topup amount for Waffo Pancake */
   waffo_pancake_min_topup?: number
+  /** Whether Zafu Pay (campus payment) topup is enabled */
+  enable_zafu_pay_topup?: boolean
+  /** Minimum topup amount for Zafu Pay */
+  zafu_pay_min_topup?: number
+  /** Daily (calendar day) topup limit for Zafu Pay, in display units. 0 = no limit */
+  zafu_pay_daily_limit?: number
+  /** Today's remaining Zafu Pay topup quota, in display units */
+  zafu_pay_daily_remaining?: number
   /** Whether redemption code usage is enabled */
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */
@@ -202,6 +211,20 @@ export interface WaffoPaymentRequest {
 export interface WaffoPancakePaymentRequest {
   /** Topup amount */
   amount: number
+}
+
+/**
+ * Zafu Pay (campus card payment) request parameters
+ *
+ * The campus platform charges by personal number (id_type=4); the backend
+ * uses the current user's username as id_no, so the client only sends the
+ * amount and payment method.
+ */
+export interface ZafuPayPaymentRequest {
+  /** Topup amount */
+  amount: number
+  /** Payment method identifier, always 'zafu_pay' */
+  payment_method: 'zafu_pay'
 }
 
 /**

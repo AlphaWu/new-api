@@ -41,9 +41,29 @@ describe('payment amount routing', () => {
         calls.push('pancake')
         return { success: true, data: '4' }
       },
+      zafuPay: async () => {
+        calls.push('zafuPay')
+        return { success: true, data: '5' }
+      },
     })
 
     expect(amount).toBe(18.75)
     expect(calls).toEqual(['waffo:120'])
+  })
+
+  test('throws the backend reason when the amount cannot be calculated', async () => {
+    await expect(
+      requestPaymentAmount(1, PAYMENT_TYPES.ZAFU_PAY, {
+        regular: async () => ({ success: true, data: '1' }),
+        stripe: async () => ({ success: true, data: '2' }),
+        waffo: async () => ({ success: true, data: '3' }),
+        waffoPancake: async () => ({ success: true, data: '4' }),
+        zafuPay: async () => ({
+          success: false,
+          message: 'error',
+          data: '充值金额过低，最低支付金额为 0.01 元',
+        }),
+      })
+    ).rejects.toThrow('充值金额过低，最低支付金额为 0.01 元')
   })
 })
