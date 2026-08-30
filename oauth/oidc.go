@@ -23,6 +23,10 @@ func init() {
 // OIDCProvider implements OAuth for OIDC
 type OIDCProvider struct{}
 
+// 编译期保证 OIDCProvider 实现 RegistrationBypassProvider 可选接口，
+// 从而可在全局注册关闭时按 AllowRegistration 设置自动建档。
+var _ RegistrationBypassProvider = (*OIDCProvider)(nil)
+
 type oidcOAuthResponse struct {
 	AccessToken  string `json:"access_token"`
 	IDToken      string `json:"id_token"`
@@ -46,6 +50,12 @@ func (p *OIDCProvider) GetName() string {
 
 func (p *OIDCProvider) IsEnabled() bool {
 	return system_setting.GetOIDCSettings().Enabled
+}
+
+// AllowRegistration reports whether OIDC may create new users even when global
+// registration is disabled.
+func (p *OIDCProvider) AllowRegistration() bool {
+	return system_setting.GetOIDCSettings().AllowRegistration
 }
 
 func (p *OIDCProvider) ExchangeToken(ctx context.Context, code string, c *gin.Context) (*OAuthToken, error) {

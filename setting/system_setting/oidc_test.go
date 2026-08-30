@@ -45,3 +45,20 @@ func TestOIDCSettings_DisplayNamePersistenceRoundTrip(t *testing.T) {
 	assert.Equal(t, "  Acme SSO  ", settings.DisplayName)
 	assert.Equal(t, "Acme SSO", settings.GetEffectiveDisplayName())
 }
+
+func TestOIDCSettings_AllowRegistrationPersistenceRoundTrip(t *testing.T) {
+	settings := &OIDCSettings{AllowRegistration: true}
+	manager := config.NewConfigManager()
+	manager.Register("oidc", settings)
+
+	saved := make(map[string]string)
+	require.NoError(t, manager.SaveToDB(func(key, value string) error {
+		saved[key] = value
+		return nil
+	}))
+	require.Equal(t, "true", saved["oidc.allow_registration"])
+
+	settings.AllowRegistration = false
+	require.NoError(t, manager.LoadFromDB(saved))
+	assert.True(t, settings.AllowRegistration)
+}
